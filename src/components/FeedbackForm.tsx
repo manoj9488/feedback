@@ -147,7 +147,7 @@ const FeedbackForm = () => {
       return;
     }
 
-    const endpoint = "https://sheetdb.io/api/v1/quv73you8ipiz";
+    const endpoint = import.meta.env.VITE_SHEETDB_API_ENDPOINT;
 
     const payload = {
       fullName: formData.fullName,
