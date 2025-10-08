@@ -18,15 +18,15 @@ const productsList = ["Product A", "Product B", "Product C", "Product D"];
 
 const FeedbackForm = () => {
   const [formData, setFormData] = useState<FormData>({
-    fullName: "",
-    organization: "",
-    role: "",
-    email: "",
-    products: [],
-    relevance: "",
-    experienceRating: "",
-    impressedMost: "",
-    improvements: "",
+    fullName: "John",
+    organization: "InkYank",
+    role: "Engineer",
+    email: "john@gmail.com",
+    products: ['Product B'],
+    relevance: "2",
+    experienceRating: "4",
+    impressedMost: "Innovations are very good",
+    improvements: "Nothing",
     category: "",
     demoAttended: "",
   });
@@ -37,7 +37,7 @@ const FeedbackForm = () => {
   interface StarRatingProps {
     name: string;
     value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange: (e: React.MouseEvent<HTMLInputElement>) => void;
     required: boolean;
   }
 
@@ -83,12 +83,18 @@ const FeedbackForm = () => {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | React.MouseEvent<HTMLInputElement>,
   ) => {
-    const { name, value, type } = e.target;
+    const target = e.target as HTMLInputElement;
+    const { name, value, type } = target;
 
-    if (type === "checkbox" && name === "products") {
-      const checked = (e.target as HTMLInputElement).checked;
+    if (name === "relevance" || name === "experienceRating") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    } else if (type === "checkbox" && name === "products") {
+      const checked = (target as HTMLInputElement).checked;
       setFormData((prev) => {
         let newProducts = [...prev.products];
         if (checked) {
@@ -150,6 +156,13 @@ const FeedbackForm = () => {
           demoAttended: "",
         });
       } else {
+        console.error("SheetDB submission failed:", response.status, response.statusText);
+        try {
+          const errorData = await response.json();
+          console.error("SheetDB error details:", errorData);
+        } catch (jsonError) {
+          console.error("Could not parse SheetDB error response as JSON:", jsonError);
+        }
         setSubmitResult("Failed to submit feedback. Please try again.");
       }
     } catch (error) {
