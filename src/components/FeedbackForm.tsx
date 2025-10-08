@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 type FormData = {
   fullName: string;
-  organization: string;
+  organization?: string;
   role: string;
   email: string;
   products: string[];
@@ -10,8 +10,6 @@ type FormData = {
   experienceRating: string;
   impressedMost: string;
   improvements: string;
-  category: string;
-  demoAttended: string;
 };
 
 const productsList = ["Product A", "Product B", "Product C", "Product D"];
@@ -22,15 +20,14 @@ const FeedbackForm = () => {
     organization: "InkYank",
     role: "Engineer",
     email: "john@gmail.com",
-    products: ['Product B'],
-    relevance: "2",
-    experienceRating: "4",
+    products: ["Product B"],
+    relevance: "",
+    experienceRating: "",
     impressedMost: "Innovations are very good",
     improvements: "Nothing",
-    category: "",
-    demoAttended: "",
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState("");
 
@@ -45,7 +42,7 @@ const FeedbackForm = () => {
     name,
     value,
     onChange,
-    required,
+    
   }) => {
     const [hover, setHover] = useState(0);
     return (
@@ -59,7 +56,7 @@ const FeedbackForm = () => {
                 name={name}
                 value={ratingValue.toString()}
                 onClick={onChange}
-                required={required}
+                // required={required}
                 className="hidden"
               />
               <svg
@@ -83,10 +80,14 @@ const FeedbackForm = () => {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | React.MouseEvent<HTMLInputElement>,
+    e:
+      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      | React.MouseEvent<HTMLInputElement>
   ) => {
     const target = e.target as HTMLInputElement;
     const { name, value, type } = target;
+
+    setErrors((prev) => ({ ...prev, [name]: "" }));
 
     if (name === "relevance" || name === "experienceRating") {
       setFormData((prev) => ({
@@ -94,7 +95,7 @@ const FeedbackForm = () => {
         [name]: value,
       }));
     } else if (type === "checkbox" && name === "products") {
-      const checked = (target as HTMLInputElement).checked;
+      const checked = target.checked;
       setFormData((prev) => {
         let newProducts = [...prev.products];
         if (checked) {
@@ -112,10 +113,39 @@ const FeedbackForm = () => {
     }
   };
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required.";
+    if (!formData.role.trim()) newErrors.role = "Role is required.";
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Enter a valid email address.";
+    }
+    if (formData.products.length === 0)
+      newErrors.products = "Please select at least one product.";
+    if (!formData.relevance) newErrors.relevance = "Relevance rating is required.";
+    if (!formData.experienceRating)
+      newErrors.experienceRating = "Experience rating is required.";
+    if (!formData.impressedMost.trim())
+      newErrors.impressedMost = "Please share what impressed you most.";
+    if (!formData.improvements.trim())
+      newErrors.improvements = "Please provide improvement suggestions.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setSubmitResult("");
+
+    if (!validateForm()) {
+      setSubmitting(false);
+      return;
+    }
 
     const endpoint = "https://sheetdb.io/api/v1/quv73you8ipiz";
 
@@ -129,8 +159,6 @@ const FeedbackForm = () => {
       experienceRating: formData.experienceRating,
       impressedMost: formData.impressedMost,
       improvements: formData.improvements,
-      category: formData.category,
-      demoAttended: formData.demoAttended,
     };
 
     try {
@@ -152,21 +180,12 @@ const FeedbackForm = () => {
           experienceRating: "",
           impressedMost: "",
           improvements: "",
-          category: "",
-          demoAttended: "",
         });
       } else {
-        console.error("SheetDB submission failed:", response.status, response.statusText);
-        try {
-          const errorData = await response.json();
-          console.error("SheetDB error details:", errorData);
-        } catch (jsonError) {
-          console.error("Could not parse SheetDB error response as JSON:", jsonError);
-        }
         setSubmitResult("Failed to submit feedback. Please try again.");
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       setSubmitResult("Error submitting the form. Please try again later.");
     }
 
@@ -180,8 +199,8 @@ const FeedbackForm = () => {
           Feedback Form
         </h2>
 
-        <div className="space-y-8">
-          {/* Section 1: Participant Info */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Participant Info */}
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-gray-800 mb-4">
               Participant Info
@@ -189,7 +208,7 @@ const FeedbackForm = () => {
 
             <div>
               <label className="block text-gray-800 font-semibold mb-2">
-                Full Name
+                Full Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -197,8 +216,13 @@ const FeedbackForm = () => {
                 placeholder="Enter your full name"
                 value={formData.fullName}
                 onChange={handleInputChange}
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
+                className={`w-full border-2 ${
+                  errors.fullName ? "border-red-500" : "border-gray-300"
+                } rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors`}
               />
+              {errors.fullName && (
+                <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
+              )}
             </div>
 
             <div>
@@ -225,14 +249,18 @@ const FeedbackForm = () => {
                 placeholder="e.g., Engineer, Product Manager, Founder"
                 value={formData.role}
                 onChange={handleInputChange}
-                required
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
+                className={`w-full border-2 ${
+                  errors.role ? "border-red-500" : "border-gray-300"
+                } rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors`}
               />
+              {errors.role && (
+                <p className="text-red-500 text-sm mt-1">{errors.role}</p>
+              )}
             </div>
 
             <div>
               <label className="block text-gray-800 font-semibold mb-2">
-                Email
+                Email <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -240,12 +268,17 @@ const FeedbackForm = () => {
                 placeholder="Enter your email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
+                className={`w-full border-2 ${
+                  errors.email ? "border-red-500" : "border-gray-300"
+                } rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors`}
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              )}
             </div>
           </div>
 
-          {/* Section 2: Product Interest */}
+          {/* Product Interest */}
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-gray-800 mb-4">
               Product Interest
@@ -253,9 +286,14 @@ const FeedbackForm = () => {
 
             <div>
               <label className="block text-gray-800 font-semibold mb-3">
-                Which product(s) did you explore?
+                Which product(s) did you explore?{" "}
+                <span className="text-red-500">*</span>
               </label>
-              <div className="flex flex-wrap gap-4">
+              <div
+                className={`flex flex-wrap gap-4 ${
+                  errors.products ? "border-red-500 p-2 rounded-lg" : ""
+                }`}
+              >
                 {productsList.map((product) => (
                   <label
                     key={product}
@@ -273,6 +311,9 @@ const FeedbackForm = () => {
                   </label>
                 ))}
               </div>
+              {errors.products && (
+                <p className="text-red-500 text-sm mt-1">{errors.products}</p>
+              )}
             </div>
 
             <div>
@@ -286,10 +327,13 @@ const FeedbackForm = () => {
                 onChange={handleInputChange}
                 required
               />
+              {errors.relevance && (
+                <p className="text-red-500 text-sm mt-1">{errors.relevance}</p>
+              )}
             </div>
           </div>
 
-          {/* Section 3: Experience Feedback */}
+          {/* Experience Feedback */}
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-gray-800 mb-4">
               Experience Feedback
@@ -306,11 +350,16 @@ const FeedbackForm = () => {
                 onChange={handleInputChange}
                 required
               />
+              {errors.experienceRating && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.experienceRating}
+                </p>
+              )}
             </div>
 
             <div>
               <label className="block text-gray-800 font-semibold mb-2">
-                What impressed you most?
+                What impressed you most? <span className="text-red-500">*</span>
               </label>
               <textarea
                 name="impressedMost"
@@ -318,13 +367,21 @@ const FeedbackForm = () => {
                 value={formData.impressedMost}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                className={`w-full border-2 ${
+                  errors.impressedMost ? "border-red-500" : "border-gray-300"
+                } rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors resize-none`}
               />
+              {errors.impressedMost && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.impressedMost}
+                </p>
+              )}
             </div>
 
             <div>
               <label className="block text-gray-800 font-semibold mb-2">
-                What could be improved or added?
+                What could be improved or added?{" "}
+                <span className="text-red-500">*</span>
               </label>
               <textarea
                 name="improvements"
@@ -332,21 +389,27 @@ const FeedbackForm = () => {
                 value={formData.improvements}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                className={`w-full border-2 ${
+                  errors.improvements ? "border-red-500" : "border-gray-300"
+                } rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors resize-none`}
               />
+              {errors.improvements && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.improvements}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
-            onClick={handleSubmit}
+            type="submit"
             disabled={submitting}
             className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors duration-200 shadow-md"
           >
             {submitting ? "Submitting..." : "Submit"}
           </button>
 
-          {/* Submission feedback */}
           {submitResult && (
             <p
               className={`text-center mt-4 font-medium ${
@@ -358,7 +421,7 @@ const FeedbackForm = () => {
               {submitResult}
             </p>
           )}
-        </div>
+        </form>
       </div>
     </div>
   );

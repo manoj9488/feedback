@@ -3,7 +3,7 @@ import FeedbackForm from "./components/FeedbackForm";
 function App() {
   return (
     <>
-      return <FeedbackForm />
+      <FeedbackForm />
     </>
   );
 }
