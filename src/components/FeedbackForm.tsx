@@ -16,15 +16,15 @@ const productsList = ["Product A", "Product B", "Product C", "Product D"];
 
 const FeedbackForm = () => {
   const [formData, setFormData] = useState<FormData>({
-    fullName: "John",
-    organization: "InkYank",
-    role: "Engineer",
-    email: "john@gmail.com",
-    products: ["Product B"],
+    fullName: "",
+    organization: "",
+    role: "",
+    email: "@gmail.com",
+    products: [""],
     relevance: "",
     experienceRating: "",
-    impressedMost: "Innovations are very good",
-    improvements: "Nothing",
+    impressedMost: "",
+    improvements: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
