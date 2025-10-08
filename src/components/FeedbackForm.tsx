@@ -34,6 +34,54 @@ const FeedbackForm = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState("");
 
+  interface StarRatingProps {
+    name: string;
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    required: boolean;
+  }
+
+  const StarRating: React.FC<StarRatingProps> = ({
+    name,
+    value,
+    onChange,
+    required,
+  }) => {
+    const [hover, setHover] = useState(0);
+    return (
+      <div className="flex space-x-1">
+        {[...Array(5)].map((_, index) => {
+          const ratingValue = index + 1;
+          return (
+            <label key={ratingValue}>
+              <input
+                type="radio"
+                name={name}
+                value={ratingValue.toString()}
+                onClick={onChange}
+                required={required}
+                className="hidden"
+              />
+              <svg
+                className={`cursor-pointer w-6 h-6 ${
+                  ratingValue <= (hover || parseInt(value))
+                    ? "text-yellow-500"
+                    : "text-gray-300"
+                }`}
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                onMouseEnter={() => setHover(ratingValue)}
+                onMouseLeave={() => setHover(0)}
+              >
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.176 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z" />
+              </svg>
+            </label>
+          );
+        })}
+      </div>
+    );
+  };
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -63,7 +111,7 @@ const FeedbackForm = () => {
     setSubmitting(true);
     setSubmitResult("");
 
-    const endpoint = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+    const endpoint = "https://sheetdb.io/api/v1/quv73you8ipiz";
 
     const payload = {
       fullName: formData.fullName,
@@ -219,25 +267,12 @@ const FeedbackForm = () => {
                 How relevant do you find this product to your work?{" "}
                 <span className="text-red-500">*</span>
               </label>
-              <div className="flex space-x-4">
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <label
-                    key={num}
-                    className="inline-flex items-center space-x-2 cursor-pointer"
-                  >
-                    <input
-                      type="radio"
-                      name="relevance"
-                      value={num.toString()}
-                      checked={formData.relevance === num.toString()}
-                      onChange={handleInputChange}
-                      required
-                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-gray-700 font-medium">{num}</span>
-                  </label>
-                ))}
-              </div>
+              <StarRating
+                name="relevance"
+                value={formData.relevance}
+                onChange={handleInputChange}
+                required
+              />
             </div>
           </div>
 
@@ -252,25 +287,12 @@ const FeedbackForm = () => {
                 Overall experience rating:{" "}
                 <span className="text-red-500">*</span>
               </label>
-              <div className="flex space-x-4">
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <label
-                    key={num}
-                    className="inline-flex items-center space-x-2 cursor-pointer"
-                  >
-                    <input
-                      type="radio"
-                      name="experienceRating"
-                      value={num.toString()}
-                      checked={formData.experienceRating === num.toString()}
-                      onChange={handleInputChange}
-                      required
-                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-gray-700 font-medium">{num}</span>
-                  </label>
-                ))}
-              </div>
+              <StarRating
+                name="experienceRating"
+                value={formData.experienceRating}
+                onChange={handleInputChange}
+                required
+              />
             </div>
 
             <div>
